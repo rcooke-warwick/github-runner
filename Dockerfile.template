@@ -1,0 +1,37 @@
+ARG BALENA_ARCH=%%BALENA_ARCH%%
+
+FROM balenalib/${BALENA_ARCH}-debian:bullseye
+
+WORKDIR /data/actions-runner
+
+# Install github runner package - different binaries depending on arm64 or x86 architecture
+RUN if [ "$(uname -m)" = "arm64" ] || [ "$(uname -m)" = "aarch64" ] ; \
+	then \
+		 curl -o actions-runner-linux-arm64-2.301.1.tar.gz -L https://github.com/actions/runner/releases/download/v2.301.1/actions-runner-linux-arm64-2.301.1.tar.gz && \
+          tar xzf ./actions-runner-linux-arm64-2.301.1.tar.gz ; \
+	else \
+		 curl -o actions-runner-linux-x64-2.301.1.tar.gz -L https://github.com/actions/runner/releases/download/v2.301.1/actions-runner-linux-x64-2.301.1.tar.gz && \
+         tar xzf ./actions-runner-linux-x64-2.301.1.tar.gz ; \
+	fi
+
+
+# Install missing dependenices using script from package. As these may change, its probably easier to just use the script rather than
+# defining them in this dockerfile
+RUN ./bin/installdependencies.sh
+
+COPY entry.sh .
+RUN chmod +x entry.sh
+
+
+ENV USER user
+#RUN useradd user && chown user . && chmod u+w . && usermod -aG sudo user
+RUN useradd -m -s /bin/bash $USER && \
+    echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers && \
+    chmod 0440 /etc/sudoers && \
+    chmod g+w /etc/passwd 
+
+RUN chown $USER . && chmod u+w . && usermod -aG sudo $USER
+
+USER $USER
+
+CMD [ "/data/actions-runner/entry.sh" ]

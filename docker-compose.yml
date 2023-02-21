@@ -1,0 +1,10 @@
+version: '2.1'
+volumes: 
+  workspace:
+services:
+  runner:
+    build: .
+    volumes:
+      - workspace:/data
+    privileged: true
+    network_mode: host
