@@ -30,6 +30,7 @@ RUN useradd -m -s /bin/bash $USER && \
     chmod 0440 /etc/sudoers && \
     chmod g+w /etc/passwd 
 
+RUN usermod -aG disk $USER
 RUN chown $USER . && chmod u+w . && usermod -aG sudo $USER
 
 USER $USER
